@@ -14,8 +14,9 @@ locals {
 variables {
   region        = "us-west-2"
   instance_type = "t2.large"
+  subnet_id     = ""
   volume_size   = 30
-  source_ami    = "ami-0c2ab3b8efb09f272"
+  source_ami    = ""
   ami_name      = "ami-snow-harbor"
   harbor_version= "v2.7.0"
 }
@@ -24,6 +25,7 @@ source "amazon-ebs" "harbor-al2" {
   ami_name      = var.ami_name
   source_ami    = var.source_ami
   instance_type = var.instance_type
+  subnet_id     = var.subnet_id
   region        = var.region
   ssh_username  = "ec2-user"
 
@@ -38,14 +40,6 @@ build {
   sources = [
     "source.amazon-ebs.harbor-al2"
   ]
-
-  provisioner "shell-local" {
-    inline = [
-      "old='/'",
-      "new='-'",
-      "cat images.txt | while read image || [[ -n $image ]]; do sudo docker pull $image && newout=$(echo $image | sed 's/\\$old/\\$new/g') && sudo docker save $image > images/$newout.tar; done"
-    ]
-  }
 
   provisioner "file" {
     source      = "./images"

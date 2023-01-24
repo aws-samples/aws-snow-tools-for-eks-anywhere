@@ -18,6 +18,7 @@ sudo yum -y install packer
 
 VOLUME=$(jq -r '.volume_size_in_gb' $CONFIG_FILE)
 INSTANCE_TYPE=$(jq -r '.instance_type' $CONFIG_FILE)
+SUBNET_ID=$(jq -r '.subnet_id' $CONFIG_FILE)
 HARBOR_VERSION=$(jq -r '.harbor_version' $CONFIG_FILE)
 AMI_ID=""
 
@@ -34,9 +35,17 @@ else
   echo "Using latest Snow AL2 to create AMI"
 fi
 
+#Check if images.txt file exists in the repo
+IMAGES_FILE="images.txt"
+if [[ ! -f $IMAGES_FILE ]]
+then
+  touch $IMAGES_FILE
+fi
+echo "Preloading images on images.txt"
+sh ./preload-images.sh
 packer init harbor.pkr.hcl
 AMI_NAME=snow-harbor-image-$(date '+%s')
-packer build -color=true -var "region=$REGION" -var "ami_name=$AMI_NAME" -var "source_ami=$AMI_ID" -var "instance_type=$INSTANCE_TYPE" -var "harbor_version=$HARBOR_VERSION" -var "volume_size=$VOLUME" -machine-readable harbor.pkr.hcl | tee build-$AMI_NAME.log
+packer build -color=true -var "region=$REGION" -var "ami_name=$AMI_NAME" -var "source_ami=$AMI_ID" -var "instance_type=$INSTANCE_TYPE" -var "subnet_id=$SUBNET_ID" -var "harbor_version=$HARBOR_VERSION" -var "volume_size=$VOLUME" -machine-readable harbor.pkr.hcl | tee build-$AMI_NAME.log
 IMAGE_ID=$(aws ec2 describe-images --owners self --filters "Name=name,Values=$AMI_NAME" --region $REGION | jq -r '.Images[0].ImageId')
 
 if [ "$EXPORT_AMI" = true ]
