@@ -1,5 +1,6 @@
 {
   "instance_type": "t2.large",
+  "subnet_id": "",
   "region": "us-west-2",
   "volume_size_in_gb": 30,
   "export_ami": false,
