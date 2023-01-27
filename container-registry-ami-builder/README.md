@@ -309,7 +309,7 @@ Now you set up all the IAM permissions for exporting AMI. Run build.sh script to
 ### Initiate a Harbor AMI Build
 Follow the following steps to initiate a Snow harbor AMI build
 1. [Subscribe to the Snow AL2 AMI](https://aws.amazon.com/marketplace/pp/prodview-sf35wbdb37e6q) if this is your first time following this guide
-2. (Optional) Follow [Export AMI to S3 Bucket](#export-ami-to-s-bucket-optional) if you want to export ami to S3 bucket
+2. (Optional) Follow [Export AMI to S3 Bucket](#export-ami-to-s3-bucket-optional) if you want to export ami to S3 bucket
 3. Change the permission of all scripts file by running the following command
 ```
 chmod +x build.sh harbor-configuration.sh harbor-image-build.sh preload-images.sh
