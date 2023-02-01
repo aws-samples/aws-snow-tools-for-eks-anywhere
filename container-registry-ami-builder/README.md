@@ -1,12 +1,11 @@
 ## Description
-This repo uses [Harbor](https://goharbor.io/) to build a registry AMI. This AMI can be used for setting up an EC2 instance on Snow devices, which could serve as the local registry for EKS Anywhere for Snow service air-gapped use case.
+This repo contains instructions and scripts that can be used to build a local [Harbor](https://goharbor.io/) AMI. This AMI can be used for setting up an EC2 instance on Snow devices, which can serve as the local registry for EKS Anywhere for Snow in air-gapped use cases.
 ## Build Harbor AMI
-In order to initiate a Harbor AMI build, you need to set up the prerequisites, preparing an Amazon Linux 2 EC2 instance setting up prerequisites and pre-loading your container images to start a building process. Please refer the following steps to kick off a building process.
 ### Prerequisites
-Before initiating a Harbor AMI build, Please create an IAM role with proper policy using AWS console, which enables you to have permissions and access to do the operations related to the building process. Please start an Amazon Linux 2 EC2 instance, which is the working environment for you to kick off a building process.
+Before initiating a Harbor AMI build, Please create an IAM role with proper policy using AWS console, which enables you to have permissions and access to do the operations related to the building process. Please start an Amazon Linux 2 EC2 instance, which is the working environment for you and ensures the reproducibility of the scripts.
 
 #### Setup IAM role with proper policy
-* Create an IAM policy named `harbor-image-builder.permissions` by following this [guide](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_create-console.html). On the *Create policy* page, paste the following in the *JSON* tab:
+* Create an IAM policy named `harbor-image-builder.permissions` by following this [guide](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_create-console.html). This will be used to create the AL2 instance, and allows it to access the necessary AWS resources to create the Harbor AMI. On the *Create policy* page, paste the following in the *JSON* tab:
 ```
 {
   "Version": "2012-10-17",
@@ -55,32 +54,31 @@ Before initiating a Harbor AMI build, Please create an IAM role with proper poli
   ]
 }
 ```
-* Create an IAM Role by following this public [doc](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user.html), attaching the `harbor-image-builder.permissions` policy you created on the previous step and naming your role as `harbor-image-builder.role`
+* Create an IAM Role by following this public [doc](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html#working-with-iam-roles), attaching the `harbor-image-builder.permissions` policy you created on the previous step. Name this role as `harbor-image-builder.role`
 #### Start an al2 instance
-* Log into the EC2 console at https://console.aws.amazon.com/ec2
-* In the navigation pane on the left, choose *Instances*. Then choose *Launch Instance*
-* Name your instance `harbor-ami-builder.instance`
-* Choose *Amazon Linux 2* in quick start
-* *Create a key pair* with default setting. It will create a key automatically and download the key file to your device. Save it so you can ssh into the instance.
-* Under advanced details section, choose `harbor-image-builder.role` as IAM instance profile
-* Keep the default selections for the other configuration settings for your instance.
-* Click Launch Instance button
 * If this is your first time following this guide, you will also need to accept the [Terms and Conditions in AWS Marketplace](https://aws.amazon.com/marketplace/pp/prodview-sf35wbdb37e6q). This AMI will be used to produce your Harbor AMI.
-* Save the public IPv4 address of the instance for connection
-* Details on setting up Amazon Linux 2 EC2 instance is [here](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EC2_GetStarted.html#ec2-launch-instance)
+* Create an AL2 EC2 named `harbor-ami-builder.instance` by following this [guide](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EC2_GetStarted.html).
+  - Select an existing key pair or select Create a key pair with the default setting, which will create a key automatically and export the key file to your device. Save this key so that you can SSH into the instance.
+  - Under the Advanced details section, choose `harbor-image-builder.role` for the IAM instance profile. Keep the default selections for the other configuration settings.
+* Launch the instance and save the public IPv4 address of the instance for connection
 
 ### Connect to Amazon Linux 2 Instance
 * Use the key pair you create above ssh to the instance([ref](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AccessingInstancesLinux.html))
-
-`ssh -i <path-to-key> ec2-user@<public-IPv4-address>`
-* Download the [aws-snow-tools-for-eks-anywhere.](https://github.com/aws-samples/aws-snow-tools-for-eks-anywhere) repo onto your al2 instance and enter into the directory of aws-snow-tools-for-eks-anywhere/container-registry-ami-builder
+```
+ssh -i <path-to-key> ec2-user@<public-IPv4-address>
+```
+* Download the [aws-snow-tools-for-eks-anywhere](https://github.com/aws-samples/aws-snow-tools-for-eks-anywhere) repo onto your al2 instance
 ```
 sudo yum install -y git
 git clone https://github.com/aws-samples/aws-snow-tools-for-eks-anywhere.git
 ```
+* Navigate to `aws-snow-tools-for-eks-anywhere/container-registry-ami-builder`
+```
+cd aws-snow-tools-for-eks-anywhere/container-registry-ami-builder
+```
 * Change the permission of all scripts file by running the following command
 ```
-chmod +x build.sh harbor-configuration.sh harbor-image-build.sh preload-images.sh
+chmod +x *.sh
 ```
 * Modify the AMI configuration file `ami.json` that contains various AMI parameters
 ```
@@ -97,18 +95,18 @@ chmod +x build.sh harbor-configuration.sh harbor-image-build.sh preload-images.s
 #### Pre-load Docker Container Images
 There are two ways to pre-load your customer docker container images. Both ways export your container images into the `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images` folder as tar files. The tar files will get imported into your Harbor registry during building process.
 ##### Script assisted
-This is the simplest method and is used by the quick start. If your workstation has access to pull into your containers, put each container image's in `images.txt` file. The packer file in the repo will iterate over `images.txt` and docker pull and save the images as tar files to the `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images` directory. You can follow the steps below to paste your images into the file.
+This is the simplest method. If your workstation has access to pull into your containers, put each container image's NAME[:TAG|@DIGEST] in `images.txt` file. The packer file in the repo will iterate over `images.txt` and docker pull and save the images as tar files to the `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images` directory.
 
 1. Open `images.txt` file at `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images.txt`
 2. Delete `hello-world` and `alpine` in the file if needed
 3. Paster your container images’  NAME[:TAG|@DIGEST] on a new line in images.txt, `ubuntu:22.04` for example
 
-###### NOTE: This only works if your al2 instance has access to the specific container registry, and assumes that they're all hosted on one registry.
+###### NOTE: This only works if your AL2 instance has access to the specific container registry where your images are hosted.
 ##### Manual Load
-This is the most robust method. You can docker pull all images in your local environment and save images as tar file. Then copy all tar files to the `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images` directory on the al2 instance. The packer file in the repo will iterate over the `images` folder and docker pull the images from the `images` directory. You can follow the steps below to manual load your images.
+This is the most robust method. You can docker pull all images in your local environment and save images as tar file. Then copy all tar files to the `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images` directory on the AL2 instance. The packer file in the repo will iterate over the `images` folder and docker import the images from the directory.
 
-1. `docker pull` all the images and run `docker save IMAGE_NAME > IMAGE_NAME.tar` to save it as tar file
-2. Copy all tar files to your al2 instance under `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images` folder before running build.sh script during the AMI build process.
+1. `docker pull` all the images and run `docker save IMAGE_NAME > IMAGE_NAME.tar` to save it as a tar file
+2. Copy all tar files to your AL2 instance under the `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images` folder before running build.sh script during the AMI build process.
 ```
 scp -i <path-to-key> <path-to-your-tar-file/your-tar-file> ec2-user@<public-IPv4-address>:~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images/
 ```
@@ -121,26 +119,27 @@ AMI export is only needed when you already have Snow devices and need to side lo
 
 Now you set up all the IAM permissions for exporting AMI. Follow the steps in [Initiate a Harbor AMI Build](#initiate-a-harbor-ami-build) and you’ll see exported Harbor AMI on S3 bucket for downloading.
 ### Initiate a Harbor AMI Build
-Follow the following steps to initiate a Snow harbor AMI build
+Follow the following steps to initiate a Snow Harbor AMI build
 1. [Subscribe to the Snow AL2 AMI](https://aws.amazon.com/marketplace/pp/prodview-sf35wbdb37e6q) if this is your first time following this guide
 2. (Optional) Follow [Export AMI to S3 Bucket](#export-ami-to-s3-bucket-optional) if you want to export ami to S3 bucket
 3. Run `build.sh` to start Harbor AMI build process.
-
-Once the script is done running, you should see a new AMI whose name has the prefix snow-harbor-image  in your AWS console that you can add to your Snow device order.
+```
+./build.sh
+```
+Once the script is done running, you should see a new AMI whose name has the prefix `snow-harbor-image` in your AWS console. This is the Harbor AMI you will add to your Snow device during the ordering process.
 ## Configure Harbor on a Snowball Edge device
 Prerequisites:
 
 1. Snow device is received and unlocked
-2. SnowGlobal Harbor AMI pre-installed on device
-3. Create named profile for your device by following this [public doc](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html#cli-configure-profiles-create)
+2. Harbor AMI pre-installed on device
+3. Refer to this [guilde](https://docs.aws.amazon.com/snowball/latest/developer-guide/using-ec2-cli-specify-region.html) to set up AWS profile and save the profile name for future use
 
-### Import the exported Harbor AMI in S3 bucket(optional)
-Please refer this [guide](https://docs.aws.amazon.com/snowball/latest/developer-guide/ec2-ami-import-cli.html) to importing your Harbor AMI into your snowball device as an Amazon EC2 AMI if you have an exported Harbor AMI in S3 bucket
+### Import the exported Harbor AMI from S3 bucket(optional)
+Refer to this [guide](https://docs.aws.amazon.com/snowball/latest/developer-guide/ec2-ami-import-cli.html) for importing your Harbor AMI into your snowball device as an Amazon EC2 AMI if you have an exported Harbor AMI in S3 bucket
 ### Launch Amazon Linux 2 EC2 Instance with Harbor AMI
-After getting your Snow device ready, launching an ec2 instance ([REF](https://docs.aws.amazon.com/snowball/latest/developer-guide/manage-ec2.html#launch-instance)) with the Harbor AMI preinstalled on your device
-###### Note: <key-file-name> here is the your key pair file name, test.pem for example
-* Create ssh key pair for the Harbor AMI ec2 instance
-###### Note: <key-file-name> here is the your key pair file name, test.pem for example
+After unlocking your Snow device, launch an EC2 instance ([REF](https://docs.aws.amazon.com/snowball/latest/developer-guide/manage-ec2.html#launch-instance)) with the preinstalled Harbor AMI.
+###### Note: `<key-file-name>` is your key pair file name, test.pem for example.
+* Create an ssh key pair for the Harbor AMI EC2 instance
 ```
 aws ec2 create-key-pair --key-name <key-name> --query 'KeyMaterial' --output text --endpoint http://<snowball-ip>:8008 --profile <profile name> > <key-file-name>
 ```
@@ -148,31 +147,32 @@ aws ec2 create-key-pair --key-name <key-name> --query 'KeyMaterial' --output tex
 ```
 aws ec2 describe-images --endpoint http://<snowball-ip>:8008 --profile <profile name>
 ```
-* Run an al2 instance with the Harbor AMI
+* Run an AL2 instance with the Harbor AMI
 ```
 aws ec2 run-instances --image-id <your-harbor-ami-id> --instance-type sbe-c.xlarge --key-name <key-name> --endpoint http://<snowball-ip>:8008 --profile <profile name>
 ```
-* Check instance status
+* Check the instance status
 ```
 aws ec2 describe-instances --instance-id <instance id> --endpoint http://<snowball-ip>:8008 --profile <profile name>
 ```
-* After the instance is in running state, describe the device and physical network interface will be found in the output of describe-device
+* After the instance is in running state, describe the device and active physical network interface will be found in the output. Save the `PhysicalNetworkInterfaceId` corresponding to the IPAddress of `ActiveNetworkInterface`
+###### Note: `$SNOWBALLEDGE_CLIENT_PATH` is absolute SnowballEdge client path on the Snow device
 ```
-./$SNOWBALLEDGE_CLIENT_PATH/bin/snowballEdge describe-device --profile <profile name>
+$SNOWBALLEDGE_CLIENT_PATH describe-device --profile <profile name>
 ```
-* Create Virtual Network Interface(VNI) with the physical network interface id corresponding with the corp ip and get the Public-IP from the output
+* Create Virtual Network Interface(VNI) with the `PhysicalNetworkInterfaceId` and get the Public-IP from the output
 ```
-./$SNOWBALLEDGE_CLIENT_PATH/bin/snowballEdge create-virtual-network-interface --physical-network-interface-id <your-physical-network-interface-id> --profile <profile name> --ip-address-assignment DHCP
+$SNOWBALLEDGE_CLIENT_PATH create-virtual-network-interface --physical-network-interface-id <physical-network-interface-id> --profile <profile name> --ip-address-assignment DHCP
 ```
 * Associate the public ip with the ec2 instance
 ```
 aws ec2 associate-address --public-ip <Public-IP> --instance-id <instance-id> --endpoint http://<snowball-ip>:8008 --profile <profile name>
 ```
-* [SSH into the EC2 instance](https://docs.aws.amazon.com/snowball/latest/developer-guide/ssh-ec2-edge.html), note that the user name is ec2-user
+* [SSH into the EC2 instance](https://docs.aws.amazon.com/snowball/latest/developer-guide/ssh-ec2-edge.html), note that the user name is `ec2-user`
 ```
 ssh -i <path-to-key> ec2-user@<Public-IP>
 ```
-* Run `harbor-configuration.sh`  on the ec2 instance and you’ll see your Harbor registry, recording the password you set during the process. The script will generate the certificate, key and CA files in your home directory
+* Run `harbor-configuration.sh` you’ll see your Harbor registry. Remember to record the password you set during the process. The script will generate the certificate, key, and CA files in the home directory
 ```
 ./harbor-configuration.sh 
 ```
@@ -180,11 +180,14 @@ ssh -i <path-to-key> ec2-user@<Public-IP>
 Prerequisites:
 
 1. EKS-A admin instance is set up successfully and is in running status.
-2. Harbor service is in running status. Please check if `telnet <HARBOR_INSTANCE_IP> 443` can receive connection successfully response
+2. Harbor is running. Use `docker-compose` to check the status of Harbor. Please run the following command in the directory where `docker-compose.yml` is located and check whether all of Harbor’s containers are in the `Up` state. [Reconfigure Harbor](https://goharbor.io/docs/1.10/install-config/reconfigure-manage-lifecycle/) if it's not running.
+```
+sudo docker-compose ps
+```
 
 ### Provide the certificates to local registry on the EKS-A admin instance
-* Copy the server certificate, key and CA files from Harbor ec2 instance to the EKS-A admin instance
-###### Note: <path-to-key> here is the path to your ssh key pair file of your EKS-A admin instance
+* Copy the server certificate, key and CA files from Harbor EC2 instance to the EKS-A admin instance
+###### Note: `<path-to-key>` is the path to your ssh key pair file of your EKS-A admin instance
 ```
 scp -i <path-to-key> ca.crt <HARBOR_INSTANCE_IP>.key <HARBOR_INSTANCE_IP>.cert ec2-user@<EKS_A_ADMIN_INSTANCE_IP>:~
 ```
@@ -204,6 +207,7 @@ docker login $REGISTRY_IP:443 --username $REGISTRY_USERNAME --password $REGISTRY
 * Populate the local registry with the container images and artifacts required for provisioning an EKS-A cluster
 ```
 # from eks-a admin instance
+export REGISTRY_IP=<harbor instance public ip>
 sudo cp ca.crt /etc/pki/ca-trust/source/anchors/
 sudo update-ca-trust extract
 
@@ -211,8 +215,7 @@ eksctl anywhere import images \
 -i /usr/lib/eks-a/artifacts/artifacts.tar.gz \
 -r $REGISTRY_IP:443 \
 --bundles /usr/lib/eks-a/manifests/bundle-release.yaml \
---insecure=true \
--v6
+--insecure=true
 ```
 * Set up your EKS-A cluster for snow
 ## License
