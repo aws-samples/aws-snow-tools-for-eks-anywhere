@@ -56,7 +56,6 @@ Before initiating a Harbor AMI build, Please create an IAM role with proper poli
 ```
 * Create an IAM Role by following this public [doc](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html#working-with-iam-roles), attaching the `harbor-image-builder.permissions` policy you created on the previous step. Name this role as `harbor-image-builder.role`
 #### Start an al2 instance
-* If this is your first time following this guide, you will also need to accept the [Terms and Conditions in AWS Marketplace](https://aws.amazon.com/marketplace/pp/prodview-sf35wbdb37e6q). This AMI will be used to produce your Harbor AMI.
 * Create an AL2 EC2 named `harbor-ami-builder.instance` by following this [guide](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EC2_GetStarted.html).
   - Select an existing key pair or select Create a key pair with the default setting, which will create a key automatically and export the key file to your device. Save this key so that you can SSH into the instance.
   - Under the Advanced details section, choose `harbor-image-builder.role` for the IAM instance profile. Keep the default selections for the other configuration settings.
@@ -101,7 +100,7 @@ This is the simplest method. If your workstation has access to pull into your co
 2. Delete `hello-world` and `alpine` in the file if needed
 3. Paster your container images’  NAME[:TAG|@DIGEST] on a new line in images.txt, `ubuntu:22.04` for example
 
-###### NOTE: This only works if your AL2 instance has access to the specific container registry where your images are hosted.
+###### NOTE: This only works if your local workstation has access to the specific container registry where your images are hosted.
 ##### Manual Load
 This is the most robust method. You can docker pull all images in your local environment and save images as tar file. Then copy all tar files to the `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images` directory on the AL2 instance. The packer file in the repo will iterate over the `images` folder and docker import the images from the directory.
 
@@ -147,7 +146,7 @@ aws ec2 create-key-pair --key-name <key-name> --query 'KeyMaterial' --output tex
 ```
 aws ec2 describe-images --endpoint http://<snowball-ip>:8008 --profile <profile name>
 ```
-* Run an AL2 instance with the Harbor AMI
+* Run an EC2 instance with the Harbor AMI
 ```
 aws ec2 run-instances --image-id <your-harbor-ami-id> --instance-type sbe-c.xlarge --key-name <key-name> --endpoint http://<snowball-ip>:8008 --profile <profile name>
 ```
@@ -156,13 +155,13 @@ aws ec2 run-instances --image-id <your-harbor-ami-id> --instance-type sbe-c.xlar
 aws ec2 describe-instances --instance-id <instance id> --endpoint http://<snowball-ip>:8008 --profile <profile name>
 ```
 * After the instance is in running state, describe the device and active physical network interface will be found in the output. Save the `PhysicalNetworkInterfaceId` corresponding to the IPAddress of `ActiveNetworkInterface`
-###### Note: `$SNOWBALLEDGE_CLIENT_PATH` is absolute SnowballEdge client path on the Snow device
+###### Note: `$SNOWBALLEDGE_CLIENT_PATH` is the absolute SnowballEdge client path on the Snow device
 ```
-$SNOWBALLEDGE_CLIENT_PATH describe-device --profile <profile name>
+$SNOWBALLEDGE_CLIENT_PATH describe-device --endpoint https://<snowball-ip> --manifest-file <manifest-path> --unlock-code <unlock-code>
 ```
 * Create Virtual Network Interface(VNI) with the `PhysicalNetworkInterfaceId` and get the Public-IP from the output
 ```
-$SNOWBALLEDGE_CLIENT_PATH create-virtual-network-interface --physical-network-interface-id <physical-network-interface-id> --profile <profile name> --ip-address-assignment DHCP
+$SNOWBALLEDGE_CLIENT_PATH create-virtual-network-interface --physical-network-interface-id <physical-network-interface-id> --ip-address-assignment DHCP --endpoint https://<snowball-ip> --manifest-file <manifest-path> --unlock-code <unlock-code>
 ```
 * Associate the public ip with the ec2 instance
 ```
@@ -180,11 +179,25 @@ ssh -i <path-to-key> ec2-user@<Public-IP>
 Prerequisites:
 
 1. EKS-A admin instance is set up successfully and is in running status.
-2. Harbor is running. Use `docker-compose` to check the status of Harbor. Please run the following command in the directory where `docker-compose.yml` is located and check whether all of Harbor’s containers are in the `Up` state. [Reconfigure Harbor](https://goharbor.io/docs/1.10/install-config/reconfigure-manage-lifecycle/) if it's not running.
+2. Harbor is running. Use `docker-compose` to check the status of Harbor. Please run the following command in `~/harbor` and check whether all containers in Harbor registry are in the `Up` state. [Stop and restart Harbor](https://goharbor.io/docs/1.10/install-config/reconfigure-manage-lifecycle/) if it's not running.
 ```
 sudo docker-compose ps
 ```
-
+An example of a running Harbor
+```
+[ec2-user@ip-xxx-xx-xx-xx harbor]$ sudo docker-compose ps
+      Name                     Command                  State                                          Ports                                    
+------------------------------------------------------------------------------------------------------------------------------------------------
+harbor-core         /harbor/entrypoint.sh            Up (healthy)                                                                               
+harbor-db           /docker-entrypoint.sh  13        Up (healthy)                                                                               
+harbor-jobservice   /harbor/entrypoint.sh            Up (healthy)                                                                               
+harbor-log          /bin/sh -c /usr/local/bin/ ...   Up (healthy)   xxx.x.x.x:xxxx->xxxxx/tcp                                                   
+harbor-portal       nginx -g daemon off;             Up (healthy)                                                                               
+nginx               nginx -g daemon off;             Up (healthy)   0.0.0.0:80->8080/tcp,:::80->8080/tcp, 0.0.0.0:443->8443/tcp,:::443->8443/tcp
+redis               redis-server /etc/redis.conf     Up (healthy)                                                                               
+registry            /home/harbor/entrypoint.sh       Up (healthy)                                                                               
+registryctl         /home/harbor/start.sh            Up (healthy)     
+```
 ### Provide the certificates to local registry on the EKS-A admin instance
 * Copy the server certificate, key and CA files from Harbor EC2 instance to the EKS-A admin instance
 ###### Note: `<path-to-key>` is the path to your ssh key pair file of your EKS-A admin instance
