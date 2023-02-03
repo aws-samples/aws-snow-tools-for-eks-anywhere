@@ -65,7 +65,7 @@ This repo contains instructions and scripts that can be used to build a local [H
 ```
 ssh -i <path-to-key>/<key-file-name> ec2-user@<public-IPv4-address>
 ```
-* Download the [aws-snow-tools-for-eks-anywhere](https://github.com/aws-samples/aws-snow-tools-for-eks-anywhere) repo onto your al2 instance
+* Download the [aws-snow-tools-for-eks-anywhere](https://github.com/aws-samples/aws-snow-tools-for-eks-anywhere) repo onto your AL2 instance
 ```
 sudo yum install -y git
 git clone https://github.com/aws-samples/aws-snow-tools-for-eks-anywhere.git
@@ -93,16 +93,16 @@ chmod +x *.sh
 ### Pre-load Docker Container Images
 There are two ways to pre-load your customer container images. Both ways export your container images into the `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images` folder as tar files. The tar files will get imported into your Harbor registry after the Harbor registry is started on a Snowball device.
 #### Script assisted
-This only works if your local workstation has access to the specific registry where your images are hosted.This only works if your local workstation has access to the specific registry where your images are hosted. If your AMI build EC2 instance has access to pull into your containers images, put each container image's NAME[:TAG|@DIGEST] in `images.txt` file. The AMI build process will iterate over `images.txt`, pull and save the images as tar files to the `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images` directory. 
+This only works if your AMI build EC2 instance has access to the specific registry where your images are hosted. If your AMI build EC2 instance has access to pull into your containers images, put each container image's NAME[:TAG|@DIGEST] in `images.txt` file. The AMI build process will iterate over `images.txt`, pull and save the images as tar files to the `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images` directory. 
 
 1. Open `images.txt` file at `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images.txt`
-2. Delete the examples `hello-world` and `alpine` in the file if needed
+2. Delete the examples `hello-world` and `alpine` in the file
 3. Paste your container images’ NAME[:TAG|@DIGEST] on a new line in `images.txt`, `ubuntu:22.04` for example
 
 #### Manual Load
-You can pull all images in your local environment and save them as tar file. Then copy all tar files to the `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images` directory on the AL2 instance. The AMI build process will iterate over the `images` folder and upload the tar files to the target AMI.
+You can pull all images in your local environment and save them as tar files. Then copy all tar files to the `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images` directory on the AL2 instance. The AMI build process will iterate over the `images` folder and upload the tar files to the target AMI.
 
-1. `docker pull` all the images and run `docker save IMAGE_NAME > IMAGE_NAME.tar` to save it as a tar file
+1. `docker pull` all the images and run `docker save IMAGE_NAME > IMAGE_NAME.tar` to save them as tar files
 2. Copy all tar files to your AL2 instance under the `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images` folder before running `build.sh` script during the AMI build process.
 ```
 scp -i <path-to-key>/<key-file-name> <path-to-your-tar-file/your-tar-file> ec2-user@<public-IPv4-address>:~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images/
@@ -161,7 +161,7 @@ $SNOWBALLEDGE_CLIENT_PATH describe-device --endpoint https://<snowball-ip> --man
 ```
 $SNOWBALLEDGE_CLIENT_PATH create-virtual-network-interface --physical-network-interface-id <physical-network-interface-id> --ip-address-assignment DHCP --endpoint https://<snowball-ip> --manifest-file <manifest-path> --unlock-code <unlock-code>
 ```
-* Associate the public ip with the ec2 instance
+* Associate the public ip with the EC2 instance
 ```
 aws ec2 associate-address --public-ip <Public-IP> --instance-id <instance-id> --endpoint http://<snowball-ip>:8008 --profile <profile name>
 ```
@@ -177,7 +177,7 @@ ssh -i <path-to-key>/<key-file-name> ec2-user@<Public-IP>
 Prerequisites:
 
 1. EKS-A admin instance is set up successfully and is in running status.
-2. Harbor is running. To check Harbor registry status, ssh to the registry instance, then use `docker-compose` to check the status of Harbor. Please run the following command in `~/harbor` and check whether all Harbor containers are in the `Up` state.  If it's not running, please [Stop and restart Harbor](https://goharbor.io/docs/1.10/install-config/reconfigure-manage-lifecycle/).
+2. Harbor is running. To check Harbor registry status, ssh to the registry instance, then run `sudo docker-compose ps` in `~/harbor` directory and check whether all Harbor containers are in the `Up (healthy)` state.  If it's not running, please [Stop and restart Harbor](https://goharbor.io/docs/1.10/install-config/reconfigure-manage-lifecycle/).
 ```
 sudo docker-compose ps
 ```
@@ -228,6 +228,5 @@ eksctl anywhere import images \
 --bundles /usr/lib/eks-a/manifests/bundle-release.yaml \
 --insecure=true
 ```
-* Set up your EKS-A cluster for snow
 ## License
 This repository is licensed under the MIT-0 License. See the LICENSE file.
