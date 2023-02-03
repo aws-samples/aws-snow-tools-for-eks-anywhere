@@ -61,8 +61,9 @@ This repo contains instructions and scripts that can be used to build a local [H
 
 ### Connect to Amazon Linux 2 Instance
 * Use the private key you create above ssh to the instance([ref](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AccessingInstancesLinux.html))
+###### Note: `<path-to-key>` is the path to your ssh key pair file of your AL2 instance
 ```
-ssh -i <path-to-key> ec2-user@<public-IPv4-address>
+ssh -i <path-to-key>/<key-file-name> ec2-user@<public-IPv4-address>
 ```
 * Download the [aws-snow-tools-for-eks-anywhere](https://github.com/aws-samples/aws-snow-tools-for-eks-anywhere) repo onto your al2 instance
 ```
@@ -104,7 +105,7 @@ You can pull all images in your local environment and save them as tar file. The
 1. `docker pull` all the images and run `docker save IMAGE_NAME > IMAGE_NAME.tar` to save it as a tar file
 2. Copy all tar files to your AL2 instance under the `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images` folder before running `build.sh` script during the AMI build process.
 ```
-scp -i <path-to-key> <path-to-your-tar-file/your-tar-file> ec2-user@<public-IPv4-address>:~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images/
+scp -i <path-to-key>/<key-file-name> <path-to-your-tar-file/your-tar-file> ec2-user@<public-IPv4-address>:~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images/
 ```
 
 ### Export AMI to S3 Bucket (Optional)
@@ -199,7 +200,7 @@ registryctl         /home/harbor/start.sh            Up (healthy)
 * Copy the server certificate, key and CA files from Harbor EC2 instance to the EKS-A admin instance
 ###### Note: `<path-to-key>` is the path to your ssh key pair file of your EKS-A admin instance
 ```
-scp -i <path-to-key> ca.crt <HARBOR_INSTANCE_IP>.key <HARBOR_INSTANCE_IP>.cert ec2-user@<EKS_A_ADMIN_INSTANCE_IP>:~
+scp -i <path-to-key>/<key-file-name> ca.crt <HARBOR_INSTANCE_IP>.key <HARBOR_INSTANCE_IP>.cert ec2-user@<EKS_A_ADMIN_INSTANCE_IP>:~
 ```
 * On the EKS-A admin instance, copy the server certificate, key and CA files into the Docker certificates folder and restart docker
 ```
