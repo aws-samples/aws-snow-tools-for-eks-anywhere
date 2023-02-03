@@ -93,7 +93,7 @@ chmod +x *.sh
 ### Pre-load Docker Container Images
 There are two ways to pre-load your customer container images. Both ways export your container images into the `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images` folder as tar files. The tar files will get imported into your Harbor registry after the Harbor registry is started on a Snowball device.
 #### Script assisted
-This only works if your AMI build EC2 instance has access to the specific registry where your images are hosted. If your AMI build EC2 instance has access to pull into your containers images, put each container image's NAME[:TAG|@DIGEST] in `images.txt` file. The AMI build process will iterate over `images.txt`, pull and save the images as tar files to the `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images` directory. 
+This only works if your AMI build EC2 instance has access to the specific registry where your images are hosted. Put each container image's NAME[:TAG|@DIGEST] in `images.txt` file. The AMI build process will iterate over `images.txt`, pull and save the images as tar files to the `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images` directory. 
 
 1. Open `images.txt` file at `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images.txt`
 2. Delete the examples `hello-world` and `alpine` in the file
