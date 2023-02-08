@@ -139,7 +139,7 @@ After unlocking your Snowball device, launch an EC2 instance ([REF](https://docs
 ```
 aws ec2 create-key-pair --key-name <key-name> --query 'KeyMaterial' --output text --endpoint http://<snowball-ip>:8008 --profile <profile name> > <path-to-key>/<key-file-name>
 ```
-###### Note: key file will be saved at <path-to-key>/<key-file-name>.
+###### Note: key file will be saved at `<path-to-key>/<key-file-name>`.
 * Describe images to find your Harbor AMI id, whose prefix is `snow-harbor-image`
 ```
 aws ec2 describe-images --endpoint http://<snowball-ip>:8008 --profile <profile name>
