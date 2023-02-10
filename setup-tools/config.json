@@ -1,0 +1,16 @@
+{
+  "SnowballEdgeClientPath": "/home/xxx/snowball-client-linux-x.x.x-xxx/bin/snowballEdge",
+  "EKSAAdminImageId": "",
+  "Devices": [
+    {
+      "IPAddress": "192.168.1.123",
+      "ManifestPath": "/tmp/manifest-final-123.bin",
+      "UnlockCode": "snowball"
+    },
+    {
+      "IPAddress": "192.168.1.124",
+      "ManifestPath": "/tmp/manifest-final-124.bin",
+      "UnlockCode": "snowball"
+    }
+  ]
+}
