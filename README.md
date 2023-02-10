@@ -1,11 +1,6 @@
-## My Project
+## AWS Snow tools for EKS Anywhere
 
-TODO: Fill this README out!
-
-Be sure to:
-
-* Change the title in this README
-* Edit your repository description on GitHub
+this repository contains AWS Snow tools for EKS Anywhere including Harbor registry AMI build and use, setup tools and cleanup tools. The instructions of those tools are in the corresponding folders.
 
 ## Security
 
