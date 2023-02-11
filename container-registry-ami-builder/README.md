@@ -228,5 +228,3 @@ eksctl anywhere import images \
 --bundles /usr/lib/eks-a/manifests/bundle-release.yaml \
 --insecure=true
 ```
-## License
-This repository is licensed under the MIT-0 License. See the LICENSE file.

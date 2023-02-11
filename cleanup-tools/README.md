@@ -2,83 +2,96 @@
 When there are previous clusters which were not deleted well, you need to clean your EKS Anywhere admin instance and your snowball devices by following these:
 
 ## EKS Anywhere resources cleaner
-`eks-a-resource-cleaner.sh` helps to clean the zombie instances, tags and DirectNetworkInterfaces from previsous EKS-A clusters. Please make sure you delete the cluster you don't need anymore.
-### Prerequisite
-1. Install jq `curl -qL -o jq https://stedolan.github.io/jq/download/linux64/jq && chmod +x ./jq`
+`eks-a-resource-cleaner.sh` helps to clean the orphaned instances, tags and direct network interfaces from previous EKS Anywhere clusters. Please make sure you delete the cluster you don't need anymore.
+
+### Prerequisites
+1. Install jq 
+```
+curl -qL -o jq https://stedolan.github.io/jq/download/linux64/jq && chmod +x ./jq
+```
 2. Add jq to your PATH
-3. Install snowballEdge cli https://docs.aws.amazon.com/snowball/latest/developer-guide/download-the-client.html
-4. Install aws cli
-5. Add absolute SnowballEdge client path and devices' information in `config.json` file
-6. Add the cluster name you want to clean in `config.json` file
+```
+export PATH=$PATH:<path to jq>
+```
+3. Install snowballEdge cli at [Downloading and Installing the Snowball Edge Client](https://docs.aws.amazon.com/snowball/latest/developer-guide/using-client.html#download-client)
+4. Install aws cli at [Installing or updating the latest version of the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+5. Add absolute SnowballEdge client path in `config.json` file
+6. Add unlock code and manifest path of each Snowball devices you want to use in `config.json` file. You can find unlock code and manifest at [Unlocking the Snowball Edge](https://docs.aws.amazon.com/snowball/latest/developer-guide/unlockdevice.html)
+7. Add the cluster name you want to clean in `config.json` file
+```
+# config.json example
+{
+  "SnowballEdgeClientPath": "/home/xxx/snowball-client-linux-x.x.x-xxx/bin/snowballEdge",  # the absolute path to snowballEdge client
+  "ClusterName": "", # the name of cluster you want to clean
+  "Devices": [
+    {
+      "IPAddress": "192.168.1.123", # ip adress of Snowball device
+      "ManifestPath": "/tmp/manifest-final-123.bin", # absolute path to manifest file you download and save
+      "UnlockCode": "snowball" # unlock code
+    },
+    {
+      "IPAddress": "192.168.1.124",
+      "ManifestPath": "/tmp/manifest-final-124.bin",
+      "UnlockCode": "snowball"
+    }
+  ]
+}
+```
+
 ### How to use this script
+* check [prerequisites](#prerequisites)
 ```
-$ chmod +x eks-a-resource-cleaner.sh
-$ ./eks-a-resource-cleaner.sh 
+sh eks-a-resource-cleaner.sh
 ```
 
-## Clean kind clusters
-If clusters failed before moving it to workerload cluster, it would be zombie kind clusters. You need to clean them manually
-### Connected to external network
-If your Snowball devices are connected to external network, you can install kind and use it
+## Clean local management cluster
+If creating a clusters fails before moving the management cluster to the workload cluster, you may also need to clean the orphaned local management cluster
+### Find eks-anywhere-cli-tools image
 ```
-$ curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.17.0/kind-linux-amd64
-$ chmod +x ./kind
-
-# add kind to your PATH
-$ sudo mv ./kind /usr/local/bin/kind
-$ kind get clusters
-
-# If you know the cluster name
-$ kind delete cluster --name <cluster-name>
-
-# If you don't know the cluster name
-$ kind delete clusters --all
+docker images | grep cli-tools
+public.ecr.aws/eks-anywhere/cli-tools   v0.14.1-eks-a-27   56a168a45941   2 weeks ago   365MB
 ```
-### Air-gapped environment
-If your Snowball devices are not connected to external network, you need to use the kind installed inside EKS Anywhere cli tools.
-#### Find eks-anywhere-cli-tools image
+### Start a container with *eks-anywhere-cli-tools* image
 ```
-$ docker images | grep eks-anywhere-cli-tools
-public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools          v0.14.1-eks-a-v0.0.0-dev-build.5819                 a1931be7d19e   22 hours ago   365MB
+docker run -d --name <container-name> --network host -w /home/ec2-user -v /var/run/docker.sock:/var/run/docker.sock -v /home/ec2-user:/home/ec2-user -v /home/ec2-user:/home/ec2-user --entrypoint sleep <image>:<Tag> infinity
 ```
-#### Start a container with *eks-anywhere-cli-tools* image
 ```
- $ docker run -d --name <container-name> --network host -w /home/ec2-user -v /var/run/docker.sock:/var/run/docker.sock -v /home/ec2-user:/home/ec2-user -v /home/ec2-user:/home/ec2-user --entrypoint sleep <image>:<Tag> infinity
- 
- # example
- $ docker run -d --name test --network host -w /home/ec2-user -v /var/run/docker.sock:/var/run/docker.sock -v /home/ec2-user:/home/ec2-user -v /home/ec2-user:/home/ec2-user --entrypoint sleep public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.14.1-eks-a-v0.0.0-dev-build.5819 infinity
-```
-#### Get all kind clusters
-```
-# get all existing kind clusters
-$ docker exec -i <container-name> kind get clusters
-
 # example
-$ docker exec -i test kind get clusters
-br-test-eks-a-cluster
-br-test-gpu-eks-a-cluster
-br-test-static-2-eks-a-cluster
-br-test-static-eks-a-cluster
+docker run -d --name test --network host -w /home/ec2-user -v /var/run/docker.sock:/var/run/docker.sock -v /home/ec2-user:/home/ec2-user -v /home/ec2-user:/home/ec2-user --entrypoint sleep public.ecr.aws/eks-anywhere/cli-tools:v0.14.1-eks-a-27 infinity
+```
+### Get all existing local management clusters
+```
+docker exec -i <container-name> kind get clusters
+```
+```
+# example
+docker exec -i test kind get clusters
+test-eks-a-cluster
+test-gpu-eks-a-cluster
+test-static-2-eks-a-cluster
+test-static-eks-a-cluster
 test-snow-eks-a-cluster
 ```
-#### Delete specific kind cluster
-if you know which kind cluster is zombie and you want to delete it
+### Delete specific local management cluster
+if you know which local management cluster is orphaned and you want to delete it
 
 ```
-$ docker exec -i <container-name> kind delete cluster --name <cluster-name>
-
+docker exec -i <container-name> kind delete cluster --name <cluster-name>
+```
+```
 # example
-$ docker exec -i test kind delete cluster --name br-test-static-eks-a-cluster
-Deleting cluster "br-test-static-eks-a-cluster" ...
+docker exec -i test kind delete cluster --name test-static-eks-a-cluster
+Deleting cluster "test-static-eks-a-cluster" ...
 ```
-#### Delete all kind clusters
-If you don't know the kind cluster name, you can use following command to delete all kind clusters.
+#### Delete all local management clusters
+If you don't know the local management cluster name, you can use following command to delete all local management clusters.
 
 *IMPORTANT*: Make sure you don't have ongoing clusters operation including creating/upgrading/deleting. Otherwise, the ongoing cluster operation may fail.
 ```
-$ docker exec -i <container-name> kind delete clusters --all
-
+docker exec -i <container-name> kind delete clusters --all
+```
+```
 # example
-$ docker exec -i test kind delete clusters --all
-Deleted clusters: ["br-test-gpu-eks-a-cluster" "test-snow-eks-a-cluster"]
+docker exec -i test kind delete clusters --all
+Deleted clusters: ["test-gpu-eks-a-cluster" "test-snow-eks-a-cluster"]
 ```
