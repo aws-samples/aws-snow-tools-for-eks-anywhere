@@ -47,7 +47,7 @@ export PATH=$PATH:<path to jq>
 * check [prerequisites](#prerequisites)
 * (Optioanl) If you need to specify an EKS Anywhere admin AMI id in `config.json`. You can find the AMI id by referring to [pending pub lic snow doc link]. Otherwise, it will use the latest EKS Anywhere admin AMI on your first Snowball device in `config.json`.
 ```
-sh setup-tooling.sh
+sh setup.sh
 ```
 Look into the printed log carefully, use the command in the last line to ssh into your EKS Anywhere admin instance. Remember to save the instance id, private key and public ip of the EKS Anywhere admin instance for future usages.
 
@@ -85,7 +85,7 @@ sh create-creds-and-certs-files.sh
 
 
 ```
-sh create-eks-a-admin-instance-test.sh
+sh create-eks-a-admin-instance.sh
 ``` 
 Look into the printed log carefully, use the command in the last line to ssh into your EKS Anywhere admin instance. Remember to save the instance id, private key and public ip of the EKS Anywhere admin instance for future usages.
 
