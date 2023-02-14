@@ -74,7 +74,10 @@ do
     echo "Start unlocking the device with ip address $DEVICE_IP"
 
     # Unlock device
-    $SNOWBALLEDGE_CLIENT_PATH unlock-device --endpoint https://$DEVICE_IP --manifest-file $MANIFEST_PATH --unlock-code $UNLOCK_CODE
+    if ! $SNOWBALLEDGE_CLIENT_PATH unlock-device --endpoint https://$DEVICE_IP --manifest-file $MANIFEST_PATH --unlock-code $UNLOCK_CODE; then
+      echo "Failed to unlock the device: $DEVICE_IP"
+      exit
+    fi
 
     # Check unlock status
     UNLOCK_STATUS=$($SNOWBALLEDGE_CLIENT_PATH describe-device --endpoint https://$DEVICE_IP --manifest-file $MANIFEST_PATH --unlock-code $UNLOCK_CODE | jq -r '.UnlockStatus.State')
@@ -84,7 +87,7 @@ do
       UNLOCK_STATUS=$($SNOWBALLEDGE_CLIENT_PATH describe-device --endpoint https://$DEVICE_IP --manifest-file $MANIFEST_PATH --unlock-code $UNLOCK_CODE | jq -r '.UnlockStatus.State')
       if [ $UNLOCK_STATUS == LOCKED ]
       then
-        echo "The device with ip address: $DEVICE_IP falls to LOCKED status. Unlocking process failed. Exiting..."
+        echo "Failed to unlock device: $DEVICE_IP"
         exit
       fi
     done
