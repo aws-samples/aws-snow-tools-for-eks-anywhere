@@ -43,9 +43,9 @@ then
 fi
 echo "Preloading images on images.txt"
 sh ./preload-images.sh
-packer init harbor.pkr.hcl
+/usr/bin/packer init harbor.pkr.hcl
 AMI_NAME=snow-harbor-image-$(date '+%s')
-packer build -color=true -var "region=$REGION" -var "ami_name=$AMI_NAME" -var "source_ami=$AMI_ID" -var "instance_type=$INSTANCE_TYPE" -var "subnet_id=$SUBNET_ID" -var "harbor_version=$HARBOR_VERSION" -var "volume_size=$VOLUME" -machine-readable harbor.pkr.hcl | tee build-$AMI_NAME.log
+/usr/bin/packer build -color=true -var "region=$REGION" -var "ami_name=$AMI_NAME" -var "source_ami=$AMI_ID" -var "instance_type=$INSTANCE_TYPE" -var "subnet_id=$SUBNET_ID" -var "harbor_version=$HARBOR_VERSION" -var "volume_size=$VOLUME" -machine-readable harbor.pkr.hcl | tee build-$AMI_NAME.log
 IMAGE_ID=$(aws ec2 describe-images --owners self --filters "Name=name,Values=$AMI_NAME" --region $REGION | jq -r '.Images[0].ImageId')
 
 if [ "$EXPORT_AMI" = true ]
