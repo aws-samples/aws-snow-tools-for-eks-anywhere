@@ -37,7 +37,7 @@ export PATH=$PATH:<path to jq>
 }
 ```
 
-## Unlock devices and setup envorinment for EKS Anywhere
+## Unlock devices and setup environment for EKS Anywhere
 `setup.sh` helps to unlock devices, get credentials and certificates, create eks anywhere admin instance and scp credential and certidicate file onto it. This script helps to setup a working eksa environment by running the following scripts in order
 * [unlock device](#unlock-devices)
 * [configure credentials and certificates](#create-credentials-and-certificates-file)
