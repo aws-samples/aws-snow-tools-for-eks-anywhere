@@ -12,5 +12,12 @@
       "ManifestPath": "/tmp/manifest-final-124.bin",
       "UnlockCode": "snowball"
     }
-  ]
+  ],
+  "ClusterName": "",
+  "ControlPlaneEndpoint": "",
+  "PodCIDR": "",
+  "ServiceCIDR": "",
+  "KubernetesVersion": "",
+  "InstanceType": "",
+  "PhysicalNetworkConnector": ""
 }
