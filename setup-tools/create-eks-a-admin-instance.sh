@@ -122,11 +122,23 @@ if [ ! -f  $CERTS_FILE ]; then
     echo "snowball_certs file does not exist. Exiting..."
     exit
 fi
-scp -o StrictHostKeyChecking=no -i /tmp/$KEY_NAME.pem $CREDS_FILE $CERTS_FILE ec2-user@$PUBLIC_IP:~
+scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /tmp/$KEY_NAME.pem $CREDS_FILE $CERTS_FILE ec2-user@$PUBLIC_IP:~
 
 # Clear environment variable
 unset AWS_ACCESS_KEY_ID
 unset AWS_SECRET_ACCESS_KEY
 unset AWS_DEFAULT_REGION
 echo "Successfully created EKS Anywhere EC2 instance $INSTANCE_ID on device with ip $DEVICE_IP and attached public ip $PUBLIC_IP on it"
-echo "Use created key pair and public ip to ssh into the EKS Anywhere instance: ssh -i /tmp/$KEY_NAME.pem ec2-user@$PUBLIC_IP"
+
+# Generate cluster config if cluster name is provided
+CLUSTER_NAME=$(jq -r '.ClusterName' $CONFIG_FILE)
+
+if [[ ! -z $CLUSTER_NAME ]]
+then
+  echo "Creating cluster config on the eksa admin instance"
+  sh ./generate-cluster-config.sh /tmp/$KEY_NAME.pem $PUBLIC_IP
+  echo "Successfully created cluster config file /home/ec2-user/eksa-cluster-$CLUSTER_NAME.yaml on the EKS Anywhere admin instance"
+  echo -e "Once your are on the admin instance, run the following command to create a cluster: \nsh ~/create-cluster-$CLUSTER_NAME.sh"
+fi
+
+echo -e "EKS Anywhere admin instance was successfully configured, you can ssh to it now using command: \nssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /tmp/$KEY_NAME.pem ec2-user@$PUBLIC_IP"
