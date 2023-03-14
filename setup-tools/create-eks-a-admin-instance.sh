@@ -67,7 +67,7 @@ export AWS_DEFAULT_REGION=snow
 IMAGE_ID=$(jq -r '.EKSAAdminImageId' $CONFIG_FILE)
 if [ -z $IMAGE_ID ]
 then
-  IMAGE_ID=$(aws ec2 describe-images --endpoint http://$DEVICE_IP:8008 | jq -r --arg IMAGE_NAME "eks-anywhere-admin-ami" '.Images[] | select(.Name | startswith($IMAGE_NAME)) | "\(.Name) \(.ImageId)"' | sort -r | head -1 | awk '{print $2}')
+  IMAGE_ID=$(aws ec2 describe-images --endpoint http://$DEVICE_IP:8008 | jq -r --arg IMAGE_NAME "eks-a-admin-ami" '.Images[] | select(.Name | startswith($IMAGE_NAME)) | "\(.Name) \(.ImageId)"' | sort -r | head -1 | awk '{print $2}')
   if [ -z $IMAGE_ID ]
   then
     echo "No EKS-A admin AMI found on the first device with the ip address: $DEVICE_IP. Exiting..."
