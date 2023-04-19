@@ -97,3 +97,13 @@ sh create-creds-and-certs-files.sh
 sh create-eks-a-admin-instance.sh
 ``` 
 Look into the printed log carefully, use the command provided in the last line of the log to ssh into your EKS Anywhere admin instance. Remember to save the instance id, private key and public ip of the EKS Anywhere admin instance for future usages.
+
+## Set up harbor registry instance
+`harbor-setup.sh` helps to create a harbor registry instance on the first Snowball device specified in `config.json`.
+
+### How to use this script
+* check [prerequisites](#prerequisites)
+```
+sh harbor-setup.sh
+``` 
+Look into the printed log carefully, use the command in the last line to ssh into your harbor registry instance. Remember to save the instance id, private key and public ip of the harbor registry instance for future usages.
