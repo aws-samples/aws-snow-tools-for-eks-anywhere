@@ -38,7 +38,7 @@ export PATH=$PATH:<path to jq>
   "ControlPlaneEndpoint": "", # optional, ip address of control plane endpoint, if provided, this static ip will be added in the cluster config
   "PodCIDR": "", # optional, Pod CIDR of the cluster, default value is "192.168.0.0/16" if left empty
   "ServiceCIDR": "", # optional, Service CIDR of the cluster, default value is "10.96.0.0/12" if left empty
-  "KubernetesVersion": "", # optional, Kubernetes version of the cluster, default value is "1.24" if left empty
+  "KubernetesVersion": "", # optional, Kubernetes version of the cluster, default value is the latest Kubernetes version EKS Anywhere supports if left empty
   "InstanceType": "", # optional, instance type of both control plane and worker nodes, default value is "sbe-c.large" if left empty
   "PhysicalNetworkConnector": "" # optional, physical network connector type for cluster network, default value is "SFP_PLUS" if left empty
 }
@@ -103,6 +103,21 @@ Look into the printed log carefully, use the command provided in the last line o
 
 ### How to use this script
 * check [prerequisites](#prerequisites)
+* If you want to use this script to generate a cluster config file for you. Please make sure you fill out following fields in the `config.json` file:
+
+
+| field name      | Description | Required |Default value|
+| ----------- | ----------- | ----------- | ----------- |
+| ClusterName      | this script will generate a cluster config using this cluster name on eks-a admin instance       |✅||
+| ControlPlaneEndpoint   | ip address of control plane endpoint        |✅||
+| PodCIDR   |Pod CIDR of the cluster         ||"192.168.0.0/16"|
+| ServiceCIDR   |Service CIDR of the cluster       ||"10.96.0.0/12"|
+| KubernetesVersion   |Kubernetes version of the cluster          ||The latest Kubernetes version EKS Anywhere supports
+| InstanceType   |instance type of both control plane and worker nodes        ||"sbe-c.large" |
+| PhysicalNetworkConnector   |physical network connector type for cluster network       ||"SFP_PLUS"|
+
+For more information, you can refer to: [Full EKS Anywhere configuration reference for a AWS Snow cluster](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/snow/)
+After you prepare the `config.json` file, run `harbor-setup.sh`:
 ```
 sh harbor-setup.sh
 ``` 
