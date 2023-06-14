@@ -1,38 +1,40 @@
 #!/bin/bash
 set -euo pipefail
 
-#install jq and docker
+# install jq and docker
 sudo yum install -y jq docker
-#Add group membership for the default ec2-user so you can run all docker commands without using the sudo command
+
+# Add group membership for the default ec2-user so you can run all docker commands without using the sudo command
 sudo usermod -a -G docker ec2-user
 sudo systemctl enable docker.service
 sudo systemctl start docker.service
-#Collect information from ami.json
-CONFIG_FILE="ami.json"
-REGION=$(jq -r '.region' $CONFIG_FILE)
-#install packer
+
+# Install packer
 echo "Install Packer"
 sudo yum install -y yum-utils
 sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
 sudo yum -y install packer
 
+# Collect information from ami.json
+CONFIG_FILE="ami.json"
+REGION=$(jq -r '.region' $CONFIG_FILE)
 VOLUME=$(jq -r '.volume_size_in_gb' $CONFIG_FILE)
 INSTANCE_TYPE=$(jq -r '.instance_type' $CONFIG_FILE)
 SUBNET_ID=$(jq -r '.subnet_id' $CONFIG_FILE)
 HARBOR_VERSION=$(jq -r '.harbor_version' $CONFIG_FILE)
-AMI_ID=""
-
 EXPORT_AMI=$(jq -r '.export_ami' $CONFIG_FILE)
+
+AMI_ID=""
 
 if [ "$EXPORT_AMI" = true ]
 then
   AMI_ID=$(aws ssm get-parameters --names /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2 --query 'Parameters[*].[Value]'  --output text  --region $REGION)
-  echo "Using latest AL2 to create AMI"
+  echo "Using latest AL2 AMI $AMI_ID to create local registry AMI"
   S3BUCKET=$(jq -r '.s3_bucket' $CONFIG_FILE)
   EXPORT_AMI=true
 else
-  AMI_ID=$(aws ec2 describe-images --filters "Name=name, Values=amzn2-ami-snow-family-hvm*" --query 'Images[*].[ImageId]'  --output text --region $REGION)
-  echo "Using latest Snow AL2 to create AMI"
+  AMI_ID=$(aws ec2 describe-images --filters "Name=name, Values=amzn2-ami-snow-family-hvm*" --query 'sort_by(Images, &CreationDate)[-1].ImageId'  --output text --region $REGION)
+  echo "Using latest Snow AL2 AMI $AMI_ID to create local registry AMI"
 fi
 
 #Check if images.txt file exists in the repo
