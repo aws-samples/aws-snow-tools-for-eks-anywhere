@@ -1,9 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-OLD='/'
-NEW='-'
 FILE="images.txt"
+
 #Check images.txt, skipping empty lines in the file and docker pull all images listed in the file
 while IFS= read -r IMAGE
 do
@@ -11,6 +10,5 @@ do
     continue
   fi
   sudo docker pull $IMAGE
-  NEW_OUT=$(echo $IMAGE | sed 's/\\$OLD/\\$NEW/g')
-  sudo docker save $IMAGE > images/$NEW_OUT.tar
+  sudo docker save $IMAGE > images/$(echo $IMAGE | sed 's/\//\-/g').tar
 done < "$FILE"
