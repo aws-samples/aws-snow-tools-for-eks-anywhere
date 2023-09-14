@@ -88,4 +88,4 @@ unset AWS_SECRET_ACCESS_KEY
 unset AWS_DEFAULT_REGION
 echo "Successfully created harbor registry instance $INSTANCE_ID on device with ip $DEVICE_IP and attached public ip $PUBLIC_IP on it"
 
-echo -e "Harbor registry instance was successfully configured, you can ssh to it now using command: \nssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /tmp/$KEY_NAME.pem ec2-user@$PUBLIC_IP"
+printf "Harbor registry instance was successfully configured, you can ssh to it now using command: \nssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /tmp/$KEY_NAME.pem ec2-user@$PUBLIC_IP"
