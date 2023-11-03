@@ -52,7 +52,7 @@ SERVICE_CIDR=$(jq -r '.ServiceCIDR' $CONFIG_FILE)
 if [[ ! -z $SERVICE_CIDR ]]
 then
   SERVICE_CIDR=$(echo $SERVICE_CIDR | sed 's/\//\\\//')
-  echo -e "sed -i 's/      - 10.96.0.0/12/      - $SERVICE_CIDR/' ~/eksa-cluster-$CLUSTER_NAME.yaml" >> /tmp/generate-cluster-config.sh
+  echo -e "sed -i 's/      - 10.96.0.0\/12/      - $SERVICE_CIDR/' ~/eksa-cluster-$CLUSTER_NAME.yaml" >> /tmp/generate-cluster-config.sh
 fi
 
 # modify instance type if provided
