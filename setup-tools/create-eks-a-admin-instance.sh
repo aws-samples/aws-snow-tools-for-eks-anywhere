@@ -138,7 +138,7 @@ then
   echo "Creating cluster config on the eksa admin instance"
   sh ./generate-cluster-config.sh /tmp/$KEY_NAME.pem $PUBLIC_IP
   echo "Successfully created cluster config file /home/ec2-user/eksa-cluster-$CLUSTER_NAME.yaml on the EKS Anywhere admin instance"
-  echo -e "Once your are on the admin instance, run the following command to create a cluster: \nsh ~/create-cluster-$CLUSTER_NAME.sh"
+  printf "Once your are on the admin instance, run the following command to create a cluster: \nsh ~/create-cluster-$CLUSTER_NAME.sh"
 fi
 
-echo -e "EKS Anywhere admin instance was successfully configured, you can ssh to it now using command: \nssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /tmp/$KEY_NAME.pem ec2-user@$PUBLIC_IP"
+printf "EKS Anywhere admin instance was successfully configured, you can ssh to it now using command: \nssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /tmp/$KEY_NAME.pem ec2-user@$PUBLIC_IP"

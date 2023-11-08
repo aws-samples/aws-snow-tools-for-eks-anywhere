@@ -23,20 +23,20 @@ set -euo pipefail
 
 EOF
 
-echo -e "eksctl anywhere generate clusterconfig $CLUSTER_NAME -p snow > ~/eksa-cluster-$CLUSTER_NAME.yaml" >> /tmp/generate-cluster-config.sh
+printf "eksctl anywhere generate clusterconfig $CLUSTER_NAME -p snow > ~/eksa-cluster-$CLUSTER_NAME.yaml\n" >> /tmp/generate-cluster-config.sh
 
 # add control plane endpoint if provided
 CONTROL_PLANE_ENDPOINT=$(jq -r '.ControlPlaneEndpoint' $CONFIG_FILE)
 if [[ ! -z $CONTROL_PLANE_ENDPOINT ]]
 then
-  echo -e "sed -i 's/      host: \"\"/      host: \"$CONTROL_PLANE_ENDPOINT\"/' ~/eksa-cluster-$CLUSTER_NAME.yaml" >> /tmp/generate-cluster-config.sh
+  printf "sed -i 's/      host: \"\"/      host: \"$CONTROL_PLANE_ENDPOINT\"/' ~/eksa-cluster-$CLUSTER_NAME.yaml\n" >> /tmp/generate-cluster-config.sh
 fi
 
 # modify kubernetes version if provided
 KUBERNETES_VERSION=$(jq -r '.KubernetesVersion' $CONFIG_FILE)
 if [[ ! -z $KUBERNETES_VERSION ]]
 then
-  echo -e "sed -i '/kubernetesVersion:/s/.*/  kubernetesVersion: $KUBERNETES_VERSION/' ~/eksa-cluster-$CLUSTER_NAME.yaml" >> /tmp/generate-cluster-config.sh
+  printf "sed -i '/kubernetesVersion:/s/.*/  kubernetesVersion: $KUBERNETES_VERSION/' ~/eksa-cluster-$CLUSTER_NAME.yaml\n" >> /tmp/generate-cluster-config.sh
 fi
 
 # modify pod cidr if provided
@@ -44,7 +44,7 @@ POD_CIDR=$(jq -r '.PodCIDR' $CONFIG_FILE)
 if [[ ! -z $POD_CIDR ]]
 then
   POD_CIDR=$(echo $POD_CIDR | sed 's/\//\\\//')
-  echo -e "sed -i 's/      - 192.168.0.0\/16/      - $POD_CIDR/' ~/eksa-cluster-$CLUSTER_NAME.yaml" >> /tmp/generate-cluster-config.sh
+  printf "sed -i 's/      - 192.168.0.0\/16/      - $POD_CIDR/' ~/eksa-cluster-$CLUSTER_NAME.yaml\n" >> /tmp/generate-cluster-config.sh
 fi
 
 # modify service cidr if provided
@@ -52,30 +52,32 @@ SERVICE_CIDR=$(jq -r '.ServiceCIDR' $CONFIG_FILE)
 if [[ ! -z $SERVICE_CIDR ]]
 then
   SERVICE_CIDR=$(echo $SERVICE_CIDR | sed 's/\//\\\//')
-  echo -e "sed -i 's/      - 10.96.0.0\/12/      - $SERVICE_CIDR/' ~/eksa-cluster-$CLUSTER_NAME.yaml" >> /tmp/generate-cluster-config.sh
+  printf "sed -i 's/      - 10.96.0.0\/12/      - $SERVICE_CIDR/' ~/eksa-cluster-$CLUSTER_NAME.yaml\n" >> /tmp/generate-cluster-config.sh
 fi
 
 # modify instance type if provided
 INSTANCE_TYPE=$(jq -r '.InstanceType' $CONFIG_FILE)
 if [[ ! -z $INSTANCE_TYPE ]]
 then
-  echo -e "sed -i '/instanceType:/s/.*/  instanceType: $INSTANCE_TYPE/' ~/eksa-cluster-$CLUSTER_NAME.yaml" >> /tmp/generate-cluster-config.sh
+  printf "sed -i '/instanceType:/s/.*/  instanceType: $INSTANCE_TYPE/' ~/eksa-cluster-$CLUSTER_NAME.yaml\n" >> /tmp/generate-cluster-config.sh
 fi
 
 # modify physical network connector type if provided
 PHYSICAL_NETWORK_CONNECTOR=$(jq -r '.PhysicalNetworkConnector' $CONFIG_FILE)
 if [[ ! -z $PHYSICAL_NETWORK_CONNECTOR ]]
 then
-  echo -e "sed -i '/physicalNetworkConnector:/s/.*/  physicalNetworkConnector: $PHYSICAL_NETWORK_CONNECTOR/' ~/eksa-cluster-$CLUSTER_NAME.yaml" >> /tmp/generate-cluster-config.sh
+  printf "sed -i '/physicalNetworkConnector:/s/.*/  physicalNetworkConnector: $PHYSICAL_NETWORK_CONNECTOR/' ~/eksa-cluster-$CLUSTER_NAME.yaml\n" >> /tmp/generate-cluster-config.sh
 fi
 
 # TODO add registry mirror if provided
 
 # add device ips to machine template device list
-echo "sed -i 's/  - \"\"/$DEVICE_LIST/' ~/eksa-cluster-$CLUSTER_NAME.yaml" >> /tmp/generate-cluster-config.sh
+cat <<EOF>> /tmp/generate-cluster-config.sh
+sed -i 's/  - \"\"/$DEVICE_LIST/' ~/eksa-cluster-$CLUSTER_NAME.yaml
+EOF
 
 # remove empty lines
-echo -e "sed -i '/^$/d' ~/eksa-cluster-$CLUSTER_NAME.yaml" >> /tmp/generate-cluster-config.sh
+printf "sed -i '/^$/d' ~/eksa-cluster-$CLUSTER_NAME.yaml" >> /tmp/generate-cluster-config.sh
 
 
 # TODO add image import command if registry mirror information is provided

@@ -6,12 +6,17 @@ There are 4 scripts in this folder which can help to setup a EKS Anywhere on Sno
 
 ## Prerequisites
 1. Install jq
+* Linux
+  ```
+  curl -qL -o jq https://stedolan.github.io/jq/download/linux64/jq && chmod +x ./jq
+  ```
+  * Add jq to PATH
+  ```
+  export PATH=$PATH:<path to jq>
+  ```
+* Mac
 ```
-curl -qL -o jq https://stedolan.github.io/jq/download/linux64/jq && chmod +x ./jq
-```
-2. Add jq to your PATH
-```
-export PATH=$PATH:<path to jq>
+brew install jq
 ```
 3. Install snowballEdge cli at [Downloading and Installing the Snowball Edge Client](https://docs.aws.amazon.com/snowball/latest/developer-guide/using-client.html#download-client)
 4. Install aws cli at [Installing or updating the latest version of the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)

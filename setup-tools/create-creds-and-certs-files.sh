@@ -126,7 +126,7 @@ do
   EKS_A_SECRET_ACCESS_KEY=$(jq -r '.AccessKey.SecretAccessKey' <<< "$CREDENTIALS")
 
   # Save the scope down credentials
-  echo -e "[$DEVICE_IP]\naws_access_key_id = $EKS_A_ACCESS_KEY_ID\naws_secret_access_key = $EKS_A_SECRET_ACCESS_KEY\nregion = snow\n\n" >> $CREDS_FILE
+  printf "[$DEVICE_IP]\naws_access_key_id = $EKS_A_ACCESS_KEY_ID\naws_secret_access_key = $EKS_A_SECRET_ACCESS_KEY\nregion = snow\n\n" >> $CREDS_FILE
   echo "Finish setting up snowball_creds file for the device with the IP Address $DEVICE_IP"
 
   # Save certificates
