@@ -1,5 +1,7 @@
 ## Description
 This repo contains instructions and scripts that can be used to build a local [Harbor](https://goharbor.io/) AMI. This AMI can be used for setting up an EC2 instance on Snowball devices, which can serve as the local registry for EKS Anywhere for Snow in air-gapped use cases.
+* Note that Harbor has a default network of `172.18.0.0/16` and Docker has a default network of `172.17.0.0/16`. Therefore, to use Harbor Registry, these CIDR cannot be used as VNI on the local subnet.
+
 ## Build Harbor AMI
 ### Prepare an AL2 instance
 #### Setup IAM role with proper policy
