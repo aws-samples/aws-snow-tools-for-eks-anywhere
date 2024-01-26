@@ -19,5 +19,6 @@
   "ServiceCIDR": "",
   "KubernetesVersion": "",
   "InstanceType": "",
-  "PhysicalNetworkConnector": ""
+  "PhysicalNetworkConnector": "",
+  "SshKeyName":""
 }
