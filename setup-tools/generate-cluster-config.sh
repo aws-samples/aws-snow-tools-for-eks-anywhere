@@ -1,10 +1,69 @@
 #!/bin/bash
 set -euo pipefail
 
+CONFIG_FILE="config.json"
+SNOWBALLEDGE_CLIENT_PATH=$(jq -r '.SnowballEdgeClientPath' $CONFIG_FILE)
+
+ValidateSshKey() {
+  KEY_NAME=$1
+  LEN=$(jq '.Devices | length' $CONFIG_FILE)
+  KEY_NAME_EXIST=false
+  KEY_NAME_EXIST_ON_ALL_DEVICE=true
+  for i in $(seq 0 $[LEN - 1])
+  do
+    DEVICE_IP=$(jq -r '.Devices['$i'].IPAddress' $CONFIG_FILE)
+    UNLOCK_CODE=$(jq -r '.Devices['$i'].UnlockCode' $CONFIG_FILE)
+    MANIFEST_PATH=$(jq -r '.Devices['$i'].ManifestPath' $CONFIG_FILE)
+
+    KEY_PAIR=$(AWS_ACCESS_KEY_ID=$($SNOWBALLEDGE_CLIENT_PATH list-access-keys --manifest-file $MANIFEST_PATH --endpoint https://$DEVICE_IP --unlock-code $UNLOCK_CODE | jq -r '.AccessKeyIds[0]') \
+      AWS_SECRET_ACCESS_KEY=$($SNOWBALLEDGE_CLIENT_PATH get-secret-access-key --access-key-id $AWS_ACCESS_KEY_ID --manifest-file $MANIFEST_PATH --endpoint https://$DEVICE_IP --unlock-code $UNLOCK_CODE | grep 'aws_secret_access_key' | awk '{print $3}') \
+      AWS_DEFAULT_REGION=snow aws \
+      ec2 describe-key-pairs --key-name $KEY_NAME --endpoint http://$DEVICE_IP:8008 | jq -r '.KeyPairs[]')
+
+    if [[ ! -z $KEY_PAIR ]]; then
+      KEY_NAME_EXIST=true
+    else
+      KEY_NAME_EXIST_ON_ALL_DEVICE=false
+    fi
+  done
+  if [ "$KEY_NAME_EXIST" = true ] && [ "$KEY_NAME_EXIST_ON_ALL_DEVICE" = false ]; then
+    echo "ssh key $KEY_NAME does not exist on all devices, existing"
+    exit 1
+  fi
+  if [ "$KEY_NAME_EXIST" = true ] && [ "$KEY_NAME_EXIST_ON_ALL_DEVICE" = true ]; then
+    CREATE_NEW_KEY=false
+  fi
+}
+
+CreateAndImportSshKey() {
+  KEY_NAME=$1
+  CREATE_NEW_KEY=true
+  ValidateSshKey $KEY_NAME
+  if [ "$CREATE_NEW_KEY" = true ]; then
+    echo "ssh key $KEY_NAME do not exist, generating and importing a new key"
+    ssh-keygen -q -t rsa -N '' -f /tmp/$KEY_NAME <<<y >/dev/null 2>&1
+    LEN=$(jq '.Devices | length' $CONFIG_FILE)
+    for i in $(seq 0 $[LEN - 1])
+    do
+      DEVICE_IP=$(jq -r '.Devices['$i'].IPAddress' $CONFIG_FILE)
+      UNLOCK_CODE=$(jq -r '.Devices['$i'].UnlockCode' $CONFIG_FILE)
+      MANIFEST_PATH=$(jq -r '.Devices['$i'].ManifestPath' $CONFIG_FILE)
+
+      AWS_ACCESS_KEY_ID=$($SNOWBALLEDGE_CLIENT_PATH list-access-keys --manifest-file $MANIFEST_PATH --endpoint https://$DEVICE_IP --unlock-code $UNLOCK_CODE | jq -r '.AccessKeyIds[0]') \
+      AWS_SECRET_ACCESS_KEY=$($SNOWBALLEDGE_CLIENT_PATH get-secret-access-key --access-key-id $AWS_ACCESS_KEY_ID --manifest-file $MANIFEST_PATH --endpoint https://$DEVICE_IP --unlock-code $UNLOCK_CODE | grep 'aws_secret_access_key' | awk '{print $3}') \
+      AWS_DEFAULT_REGION=snow aws \
+      aws ec2 import-key-pair --key-name $KEY_NAME --public-key-material fileb:///tmp/$KEY_NAME.pub --endpoint http://$DEVICE_IP:8008
+
+    done
+    echo "generated node ssh key with name $KEY_NAME, and imported to all devices"
+    echo "private key saved at /tmp/$KEY_NAME"
+  else
+    echo "ssh key $KEY_NAME exists on all devices"
+  fi
+}
+
 KEY_PATH=$1
 INSTANCE_IP=$2
-
-CONFIG_FILE="config.json"
 
 CLUSTER_NAME=$(jq -r '.ClusterName' $CONFIG_FILE)
 DEVICE_LIST=""
@@ -69,6 +128,15 @@ then
   printf "sed -i '/physicalNetworkConnector:/s/.*/  physicalNetworkConnector: $PHYSICAL_NETWORK_CONNECTOR/' ~/eksa-cluster-$CLUSTER_NAME.yaml\n" >> /tmp/generate-cluster-config.sh
 fi
 
+# validate and add node ssh key name
+SSH_KEY_NAME=$(jq -r '.SshKeyName' $CONFIG_FILE)
+if [[ -z $SSH_KEY_NAME ]]
+then
+  SSH_KEY_NAME="$CLUSTER_NAME-key-$(date '+%s')"
+fi
+CreateAndImportSshKey $SSH_KEY_NAME
+printf "sed -i '/instanceType:/a\ \ sshKeyName: $SSH_KEY_NAME' ~/eksa-cluster-$CLUSTER_NAME.yaml\n" >> /tmp/generate-cluster-config.sh
+
 # TODO add registry mirror if provided
 
 # add device ips to machine template device list
@@ -91,5 +159,5 @@ export EKSA_AWS_CA_BUNDLES_FILE=/home/ec2-user/snowball_certs
 eksctl anywhere create cluster -f /home/ec2-user/eksa-cluster-$CLUSTER_NAME.yaml -v4
 EOF
 
-scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i $KEY_PATH  /tmp/generate-cluster-config.sh /tmp/create-cluster-$CLUSTER_NAME.sh ec2-user@$INSTANCE_IP:~
-ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i $KEY_PATH ec2-user@$INSTANCE_IP "sh ~/generate-cluster-config.sh > /tmp/generate-cluster-config.log && rm -rf ~/generate-cluster-config.sh"
+scp -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i $KEY_PATH  /tmp/generate-cluster-config.sh /tmp/create-cluster-$CLUSTER_NAME.sh ec2-user@$INSTANCE_IP:~
+ssh -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i $KEY_PATH ec2-user@$INSTANCE_IP "sh ~/generate-cluster-config.sh > /tmp/generate-cluster-config.log && rm -rf ~/generate-cluster-config.sh"
