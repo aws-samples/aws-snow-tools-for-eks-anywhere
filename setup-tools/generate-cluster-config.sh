@@ -17,8 +17,8 @@ ValidateSshKey() {
 
     KEY_PAIR=$(AWS_ACCESS_KEY_ID=$($SNOWBALLEDGE_CLIENT_PATH list-access-keys --manifest-file $MANIFEST_PATH --endpoint https://$DEVICE_IP --unlock-code $UNLOCK_CODE | jq -r '.AccessKeyIds[0]') \
       AWS_SECRET_ACCESS_KEY=$($SNOWBALLEDGE_CLIENT_PATH get-secret-access-key --access-key-id $AWS_ACCESS_KEY_ID --manifest-file $MANIFEST_PATH --endpoint https://$DEVICE_IP --unlock-code $UNLOCK_CODE | grep 'aws_secret_access_key' | awk '{print $3}') \
-      AWS_DEFAULT_REGION=snow aws \
-      ec2 describe-key-pairs --key-name $KEY_NAME --endpoint http://$DEVICE_IP:8008 | jq -r '.KeyPairs[]')
+      AWS_DEFAULT_REGION=snow \
+      aws ec2 describe-key-pairs --key-name $KEY_NAME --endpoint http://$DEVICE_IP:8008 | jq -r '.KeyPairs[]')
 
     if [[ ! -z $KEY_PAIR ]]; then
       KEY_NAME_EXIST=true
@@ -51,7 +51,7 @@ CreateAndImportSshKey() {
 
       AWS_ACCESS_KEY_ID=$($SNOWBALLEDGE_CLIENT_PATH list-access-keys --manifest-file $MANIFEST_PATH --endpoint https://$DEVICE_IP --unlock-code $UNLOCK_CODE | jq -r '.AccessKeyIds[0]') \
       AWS_SECRET_ACCESS_KEY=$($SNOWBALLEDGE_CLIENT_PATH get-secret-access-key --access-key-id $AWS_ACCESS_KEY_ID --manifest-file $MANIFEST_PATH --endpoint https://$DEVICE_IP --unlock-code $UNLOCK_CODE | grep 'aws_secret_access_key' | awk '{print $3}') \
-      AWS_DEFAULT_REGION=snow aws \
+      AWS_DEFAULT_REGION=snow \
       aws ec2 import-key-pair --key-name $KEY_NAME --public-key-material fileb:///tmp/$KEY_NAME.pub --endpoint http://$DEVICE_IP:8008
 
     done
