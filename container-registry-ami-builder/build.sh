@@ -24,17 +24,13 @@ SUBNET_ID=$(jq -r '.subnet_id' $CONFIG_FILE)
 HARBOR_VERSION=$(jq -r '.harbor_version' $CONFIG_FILE)
 EXPORT_AMI=$(jq -r '.export_ami' $CONFIG_FILE)
 
-AMI_ID=""
+AMI_ID=$(aws ssm get-parameters --names /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2 --query 'Parameters[*].[Value]'  --output text  --region $REGION)
+echo "Using latest AL2 AMI $AMI_ID to create local registry AMI"
 
 if [ "$EXPORT_AMI" = true ]
 then
-  AMI_ID=$(aws ssm get-parameters --names /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2 --query 'Parameters[*].[Value]'  --output text  --region $REGION)
-  echo "Using latest AL2 AMI $AMI_ID to create local registry AMI"
   S3BUCKET=$(jq -r '.s3_bucket' $CONFIG_FILE)
   EXPORT_AMI=true
-else
-  AMI_ID=$(aws ec2 describe-images --filters "Name=name, Values=amzn2-ami-snow-family-hvm*" --query 'sort_by(Images, &CreationDate)[-1].ImageId'  --output text --region $REGION)
-  echo "Using latest Snow AL2 AMI $AMI_ID to create local registry AMI"
 fi
 
 #Check if images.txt file exists in the repo

@@ -102,9 +102,8 @@ sleep 30
 ## Create needed Projects in Harbor
 curl -u admin:$ADMIN_PASSWORD -k -X 'POST' https://$INSTANCE_IP/api/v2.0/projects -H 'Content-Type: application/json' -d '{ "project_name": "eks-anywhere", "public": true }'
 curl -u admin:$ADMIN_PASSWORD -k -X 'POST' https://$INSTANCE_IP/api/v2.0/projects -H 'Content-Type: application/json' -d '{ "project_name": "eks-distro", "public": true }'
-curl -u admin:$ADMIN_PASSWORD -k -X 'POST' https://$INSTANCE_IP/api/v2.0/projects -H 'Content-Type: application/json' -d '{ "project_name": "isovalent", "public": true }'
 curl -u admin:$ADMIN_PASSWORD -k -X 'POST' https://$INSTANCE_IP/api/v2.0/projects -H 'Content-Type: application/json' -d '{ "project_name": "bottlerocket", "public": true }'
-curl -u admin:$ADMIN_PASSWORD -k -X 'POST' https://$INSTANCE_IP/api/v2.0/projects -H 'Content-Type: application/json' -d '{ "project_name": "cilium-chart", "public": true }'
+curl -u admin:$ADMIN_PASSWORD -k -X 'POST' https://$INSTANCE_IP/api/v2.0/projects -H 'Content-Type: application/json' -d '{ "project_name": "eks", "public": true }'
 
 ## login to harbor from local docker
 sleep 30

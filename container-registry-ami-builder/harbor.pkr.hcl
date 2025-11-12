@@ -29,6 +29,13 @@ source "amazon-ebs" "harbor-al2" {
   region        = var.region
   ssh_username  = "ec2-user"
 
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 1
+    instance_metadata_tags      = "enabled"
+  }
+
   launch_block_device_mappings {
     device_name           = "/dev/xvda"
     volume_size           = var.volume_size
