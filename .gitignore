@@ -1,0 +1,2 @@
+container-registry-ami-builder/*.log
+container-registry-ami-builder/images/*.tar
