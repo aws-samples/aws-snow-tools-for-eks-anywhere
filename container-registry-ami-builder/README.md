@@ -3,9 +3,9 @@ This repo contains instructions and scripts that can be used to build a local [H
 * Note that Harbor has a default network of `172.18.0.0/16` and Docker has a default network of `172.17.0.0/16`. Therefore, to use Harbor Registry, these CIDR cannot be used as VNI on the local subnet.
 
 ## Build Harbor AMI
-### Prepare an AL2 instance
+### Prepare an AL2023 instance
 #### Setup IAM role with proper policy
-* Create an IAM policy named `harbor-image-builder.permissions` by following this [guide](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_create-console.html). This will be used to create the AL2 instance, and allows it to access the necessary AWS resources to create the Harbor AMI. On the *Create policy* page, paste the following in the *JSON* tab:
+* Create an IAM policy named `harbor-image-builder.permissions` by following this [guide](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_create-console.html). This will be used to create the AL2023 instance, and allows it to access the necessary AWS resources to create the Harbor AMI. On the *Create policy* page, paste the following in the *JSON* tab:
 ```
 {
   "Version": "2012-10-17",
@@ -55,19 +55,19 @@ This repo contains instructions and scripts that can be used to build a local [H
 }
 ```
 * Create an IAM Role by following this public [doc](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html#working-with-iam-roles), attaching the `harbor-image-builder.permissions` policy you created on the previous step. Name this role as `harbor-image-builder.role`
-#### Start an AL2 instance with created IAM role
-* Create an AL2 EC2 instance named `harbor-ami-builder.instance` by following this [guide](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EC2_GetStarted.html).
+#### Start an AL2023 instance with created IAM role
+* Create an AL2023 EC2 instance named `harbor-ami-builder.instance` by following this [guide](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EC2_GetStarted.html).
   - Select an existing key pair or select Create a key pair with the default setting, which will create a key and download the private key file to your device automatically. Save this private key so that you can SSH into the instance.
   - Under the Advanced details section, choose `harbor-image-builder.role` for the IAM instance profile. Keep the default selections for the other configuration settings.
 * Launch the instance and save the public IPv4 address of the instance for connection
 
 ### Connect to Amazon Linux 2 Instance
 * Use the private key you create above ssh to the instance([ref](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AccessingInstancesLinux.html))
-###### Note: `<path-to-key>` is the path to your private key and `<public-IPv4-address>` is the public ip of your AL2 instance
+###### Note: `<path-to-key>` is the path to your private key and `<public-IPv4-address>` is the public ip of your AL2023 instance
 ```
 ssh -i <path-to-key> ec2-user@<public-IPv4-address>
 ```
-* Download the [aws-snow-tools-for-eks-anywhere](https://github.com/aws-samples/aws-snow-tools-for-eks-anywhere) repo onto your AL2 instance
+* Download the [aws-snow-tools-for-eks-anywhere](https://github.com/aws-samples/aws-snow-tools-for-eks-anywhere) repo onto your AL2023 instance
 ```
 sudo yum install -y git
 git clone https://github.com/aws-samples/aws-snow-tools-for-eks-anywhere.git
@@ -102,10 +102,10 @@ This only works if your AMI build EC2 instance has access to the specific regist
 3. Paste your container images’ NAME[:TAG|@DIGEST] on a new line in `images.txt`, `ubuntu:22.04` for example
 
 #### Manual Load
-You can pull all images in your local environment and save them as tar files. Then copy all tar files to the `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images` directory on the AL2 instance. The AMI build process will iterate over the `images` folder and upload the tar files to the target AMI.
+You can pull all images in your local environment and save them as tar files. Then copy all tar files to the `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images` directory on the AL2023 instance. The AMI build process will iterate over the `images` folder and upload the tar files to the target AMI.
 
 1. `docker pull` all the images and run `docker save IMAGE_NAME > IMAGE_NAME.tar` to save them as tar files
-2. Copy all tar files to your AL2 instance under the `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images` folder before running `build.sh` script during the AMI build process.
+2. Copy all tar files to your AL2023 instance under the `~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images` folder before running `build.sh` script during the AMI build process.
 ```
 scp -i <path-to-key> <path-to-your-tar-file/your-tar-file> ec2-user@<public-IPv4-address>:~/aws-snow-tools-for-eks-anywhere/container-registry-ami-builder/images/
 ```
@@ -119,9 +119,8 @@ AMI export is only needed when you already have Snowball devices and need to sid
 Now you set up all the IAM permissions for exporting AMI. Follow the steps in [Initiate a Harbor AMI Build](#initiate-a-harbor-ami-build) and you’ll see exported Harbor AMI on S3 bucket for downloading.
 ### Initiate a Harbor AMI Build
 Follow the following steps to initiate a Snow Harbor AMI build
-1. [Subscribe to the Snow AL2 AMI](https://aws.amazon.com/marketplace/pp/prodview-sf35wbdb37e6q) if this is your first time following this guide
-2. (Optional) Follow [Export AMI to S3 Bucket](#export-ami-to-s3-bucket-optional) if you want to export ami to S3 bucket
-3. Run `build.sh` to start Harbor AMI build process.
+1. (Optional) Follow [Export AMI to S3 Bucket](#export-ami-to-s3-bucket-optional) if you want to export ami to S3 bucket
+2. Run `build.sh` to start Harbor AMI build process.
 ```
 ./build.sh
 ```
