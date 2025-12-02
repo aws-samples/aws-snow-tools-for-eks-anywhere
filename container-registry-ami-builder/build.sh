@@ -24,8 +24,8 @@ SUBNET_ID=$(jq -r '.subnet_id' $CONFIG_FILE)
 HARBOR_VERSION=$(jq -r '.harbor_version' $CONFIG_FILE)
 EXPORT_AMI=$(jq -r '.export_ami' $CONFIG_FILE)
 
-AMI_ID=$(aws ssm get-parameters --names /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2 --query 'Parameters[*].[Value]'  --output text  --region $REGION)
-echo "Using latest AL2 AMI $AMI_ID to create local registry AMI"
+AMI_ID=$(aws ssm get-parameters --names /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64 --query 'Parameters[*].[Value]' --output text --region $REGION)
+echo "Using latest AL2023 AMI $AMI_ID to create local registry AMI"
 
 if [ "$EXPORT_AMI" = true ]
 then
@@ -64,7 +64,7 @@ then
           EXPORT_STATUS=$(echo $DESCRIBE_JSON | jq -r '.ExportImageTasks[0].Status')
           echo "AMI exporting in process"
           if [ "$EXPORT_STATUS" = "completed" ]; then
-              echo "AMI successfully exported to s3 bucket $S3BUCKET"
+              echo "AMI successfully exported to s3 bucket $S3BUCKET with key $EXPORT_TASK_ID.raw"
               break
           fi
       done
@@ -73,4 +73,4 @@ then
     wait_for_complete "$EXPORT_TASK_ID"
 fi
 
-echo "Habor AMI has been created"
+echo "Harbor AMI with image id $IMAGE_ID has been created in region $REGION"

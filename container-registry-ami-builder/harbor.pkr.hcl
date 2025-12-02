@@ -18,10 +18,10 @@ variables {
   volume_size   = 30
   source_ami    = ""
   ami_name      = "ami-snow-harbor"
-  harbor_version= "v2.7.0"
+  harbor_version= "v2.14.1"
 }
 
-source "amazon-ebs" "harbor-al2" {
+source "amazon-ebs" "harbor-al2023" {
   ami_name      = var.ami_name
   source_ami    = var.source_ami
   instance_type = var.instance_type
@@ -45,7 +45,7 @@ source "amazon-ebs" "harbor-al2" {
 
 build {
   sources = [
-    "source.amazon-ebs.harbor-al2"
+    "source.amazon-ebs.harbor-al2023"
   ]
 
   provisioner "file" {
